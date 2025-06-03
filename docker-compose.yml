@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:17.4-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: flower
+      POSTGRES_PASSWORD: flower
+      POSTGRES_DB: flower_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+      #  zookeeper:
+  #    image: confluentinc/cp-zookeeper:7.3.2
+      #    container_name: zookeeper
+      #    environment:
+    #      ZOOKEEPER_CLIENT_PORT: 2181
+      #      ZOOKEEPER_TICK_TIME: 2000
+      #    ports:
+    #      - "2181:2181"
+
+      #  kafka:
+  #    image: confluentinc/cp-kafka:7.3.2
+      #    container_name: kafka
+      #    depends_on:
+    #      - zookeeper
+      #    ports:
+    #      - "9092:9092"
+      #    environment:
+    #      KAFKA_BROKER_ID: 1
+      #      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      #      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      #      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      #      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      #      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+
+      # 🛠 Добавленные параметры для поддержки больших сообщений
+#      KAFKA_MESSAGE_MAX_BYTES: 200000000           # 200 MB
+#      KAFKA_REPLICA_FETCH_MAX_BYTES: 200000000     # 200 MB
+#      KAFKA_FETCH_MESSAGE_MAX_BYTES: 200000000     # 200 MB
+
+volumes:
+  postgres_data:

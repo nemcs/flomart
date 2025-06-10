@@ -1,1 +1,15 @@
-/.idea
+# IDE
+.idea/
+*.iml
+.vscode/
+.history/
+*.sublime-workspace
+*.sublime-project
+
+# Environment
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Dependency directories
+vendor/

@@ -1,10 +1,14 @@
 package config
 
 type Config struct {
-	DBUrl string
+	DBUrl     string
+	JWTSecret string
 }
 
-// TODO load .env
+// TODO load .env github.com/joho/godotenv или os.Getenv():
 func New() *Config {
-	return &Config{DBUrl: "postgres://flower:flower@postgres:5432/flower_db?sslmode=disable"}
+	return &Config{
+		DBUrl:     "postgres://flower:flower@postgres:5432/flower_db?sslmode=disable",
+		JWTSecret: "secrGJ83gGihkwGKWu3gVDGbe5jkoDG3gpdA",
+	}
 }

@@ -24,7 +24,7 @@ type UserRepository interface {
 	Create(ctx context.Context, c *User) error
 }
 
-func (u *User) New(email, password, role, name, phone string) *User {
+func New(email, password, role, name, phone string) *User {
 	return &User{
 		ID:           ID(uuid.New().String()),
 		Email:        email,

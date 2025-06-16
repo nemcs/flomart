@@ -2,8 +2,11 @@ package db
 
 import (
 	"context"
+	"flomart/internal/identity"
+	"flomart/pkg/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
+	"log/slog"
+	"os"
 	"time"
 )
 
@@ -13,7 +16,10 @@ func NewPgxPool(dbURL string) *pgxpool.Pool {
 
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
-		log.Fatalf("не удалось подключиться к БД: %v", err)
+		logger.Log.Error(identity.ErrDBConnectionDev,
+			slog.String(logger.FieldErr, err.Error()),
+			slog.String("dbURL", dbURL))
+		os.Exit(1)
 	}
 
 	return pool

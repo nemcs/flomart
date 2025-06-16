@@ -1,13 +1,12 @@
 // DTO: входные/выходные данные
 package identity
 
-// TODO валидация с помощью github.com/go-playground/validator/v10
 type RegisterInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+	Name     string `json:"name" validate:"required"`
 	Phone    string `json:"phone"`
-	Role     string `json:"role"`
+	Role     string `json:"role" validate:"required,oneof=client courier admin"`
 }
 
 type LoginInput struct {

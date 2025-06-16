@@ -11,7 +11,7 @@ type ID string
 type User struct {
 	ID           ID        `json:"ID"`
 	Email        string    `json:"email"`
-	PasswordHash string    `json:"password_hash"`
+	PasswordHash string    `json:"-"`
 	Role         string    `json:"role"`
 	FullName     string    `json:"full_name"`
 	Phone        string    `json:"phone"`

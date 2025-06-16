@@ -1,14 +1,25 @@
 package config
 
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"os"
+	"time"
+)
+
 type Config struct {
-	DBUrl     string
-	JWTSecret string
+	Port          string
+	DBUrl         string
+	JWTSecret     string
+	JWTExpiration *jwt.NumericDate
 }
 
-// TODO load .env github.com/joho/godotenv или os.Getenv():
 func New() *Config {
 	return &Config{
-		DBUrl:     "postgres://flower:flower@postgres:5432/flower_db?sslmode=disable",
-		JWTSecret: "secrGJ83gGihkwGKWu3gVDGbe5jkoDG3gpdA",
+		//TODO сделать проверку на пустую строку и fatal-лог
+		Port:      os.Getenv("LISTEN_PORT"),
+		DBUrl:     os.Getenv("DB_URL"),
+		JWTSecret: os.Getenv("JWT_SECRET"),
+		//TODO переместить JWTExpiration в TokenManager
+		JWTExpiration: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 	}
 }

@@ -7,7 +7,7 @@ COPY go.sum ./
 RUN go mod download
 
 COPY . ./
-COPY ./database /app/database
+COPY ./database /app/databaseы
 RUN go build -o main ./cmd
 
 CMD ["./main"]

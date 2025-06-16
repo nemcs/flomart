@@ -1,4 +1,11 @@
 services:
+  migrate:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    command: ["go", "run", "./cmd/migrate"]
+
   flomart:
     build:
       context: .

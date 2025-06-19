@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flomart/domain/user"
 	"flomart/internal/identity"
+	"flomart/internal/identity/dto"
 	"flomart/internal/identity/repository"
 	"flomart/pkg/logger"
 	"github.com/jackc/pgx/v5"
@@ -20,8 +21,8 @@ import (
 //TODO 💡	Пароли: добавь bcrypt.MinCost в конфиг, чтобы можно было менять cost.
 
 type Service interface {
-	RegisterUser(ctx context.Context, input identity.RegisterInput) (user.ID, error)
-	LoginUser(ctx context.Context, input identity.LoginInput) (string, error)
+	RegisterUser(ctx context.Context, input dto.RegisterInput) (user.ID, error)
+	LoginUser(ctx context.Context, input dto.LoginInput) (string, error)
 }
 type service struct {
 	repo repository.Repository
@@ -31,7 +32,7 @@ func NewService(repo repository.Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) RegisterUser(ctx context.Context, input identity.RegisterInput) (user.ID, error) {
+func (s *service) RegisterUser(ctx context.Context, input dto.RegisterInput) (user.ID, error) {
 	existing, err := s.repo.FindByEmail(ctx, input.Email)
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -61,7 +62,7 @@ func (s *service) RegisterUser(ctx context.Context, input identity.RegisterInput
 	return *id, nil
 }
 
-func (s *service) LoginUser(ctx context.Context, input identity.LoginInput) (string, error) {
+func (s *service) LoginUser(ctx context.Context, input dto.LoginInput) (string, error) {
 	//находим пользователя
 	u, err := s.repo.FindByEmail(ctx, input.Email)
 	if err != nil {

@@ -3,7 +3,9 @@ package handler
 
 import (
 	"flomart/domain/user"
+	"flomart/internal/apperror"
 	"flomart/internal/identity"
+	"flomart/internal/identity/dto"
 	"flomart/internal/identity/service"
 	"flomart/internal/identity/utils"
 	"flomart/pkg/httphelper"
@@ -27,35 +29,26 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	defer r.Body.Close()
 
-	input, err := httphelper.DecodeJSON[identity.RegisterInput](r)
+	input, err := httphelper.DecodeJSON[dto.RegisterInput](r)
 	if err != nil {
-		utils.LogAndWriteError(w, "RegisterUser",
-			identity.ErrInvalidJSONMsg,
-			utils.DevError{
-				Msg: identity.ErrInvalidJSONDev,
-				Err: err,
-			},
-			http.StatusBadRequest)
+		appErr := apperror.New(err, identity.ErrInvalidJSONMsg, identity.ErrInvalidJSONDev, http.StatusBadRequest)
+		utils.LogAndWriteError(w, *appErr)
 		return
 	}
 	regInput := *input
 
 	// валидация input
 	if err = identity.ValidateRegisterInput(regInput); err != nil {
-		utils.LogAndWriteError(w, "RegisterUser",
-			identity.ErrBadRequestMsg,
-			utils.DevError{
-				Msg: identity.ErrValidationDev,
-				Err: err,
-			},
-			http.StatusBadRequest)
+		appErr := apperror.Wrap(err, identity.ErrBadRequestMsg, identity.ErrValidationDev, http.StatusBadRequest)
+		utils.LogAndWriteError(w, *appErr)
 		return
 	}
 
 	//Регистрация пользователя -> передаем в service
 	id, err := h.service.RegisterUser(ctx, regInput)
 	if err != nil {
-		_ = utils.WriteJSONError(w, err.Error(), http.StatusBadRequest)
+		appErr := apperror.Wrap(err, "Регистрация не удалась", "service.RegisterUser: ошибка регистрации", http.StatusBadRequest)
+		_ = utils.WriteJSONError(w, *appErr)
 		return
 	}
 
@@ -67,21 +60,17 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	defer r.Body.Close()
 
-	input, err := httphelper.DecodeJSON[identity.LoginInput](r)
+	input, err := httphelper.DecodeJSON[dto.LoginInput](r)
 	if err != nil {
-		utils.LogAndWriteError(w, "LoginUser",
-			identity.ErrInvalidJSONMsg,
-			utils.DevError{
-				Msg: identity.ErrInvalidJSONDev,
-				Err: err,
-			},
-			http.StatusBadRequest)
+		appErr := apperror.New(err, identity.ErrInvalidJSONMsg, identity.ErrInvalidJSONDev, http.StatusBadRequest)
+		utils.LogAndWriteError(w, *appErr)
 		return
 	}
 
 	token, err := h.service.LoginUser(ctx, *input)
 	if err != nil {
-		_ = utils.WriteJSONError(w, identity.ErrInvalidCredentialsMsg, http.StatusUnauthorized)
+		appErr := apperror.Wrap(err, identity.ErrInvalidCredentialsMsg, "service.LoginUser: неверный логин или пароль", http.StatusUnauthorized)
+		_ = utils.WriteJSONError(w, *appErr)
 		return
 	}
 	_ = utils.WriteJSONResponse(w, map[string]string{"token": token}, http.StatusOK)

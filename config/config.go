@@ -3,6 +3,7 @@ package config
 import (
 	"flomart/pkg/logger"
 	"github.com/golang-jwt/jwt/v5"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -34,7 +35,7 @@ func mustGetDurationHours(key string) *jwt.NumericDate {
 	valueStr := os.Getenv(key)
 	hours, err := strconv.Atoi(valueStr)
 	if err != nil || hours <= 0 {
-		logger.Log.Error(logger.FieldErr, "Ошибка жизни токена")
+		logger.Log.Error("Ошибка жизни токена", slog.String(logger.FieldErr, err.Error()))
 		os.Exit(1)
 	}
 	return jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(hours)))

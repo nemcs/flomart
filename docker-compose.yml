@@ -1,4 +1,24 @@
 services:
+  migrate:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    command: ["go", "run", "./cmd/migrate"]
+
+  flomart:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flomart
+    depends_on:
+      - postgres
+    environment:
+      - DB_URL=postgres://flower:flower@postgres:5432/flower_db?sslmode=disable
+    ports:
+      - "8080:8080"
+    command: ["./main"]
+
   postgres:
     image: postgres:17.4-alpine
     container_name: postgres

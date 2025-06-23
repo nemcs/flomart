@@ -67,11 +67,56 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.LoginUser(ctx, *input)
+	access, refresh, err := h.service.LoginUser(ctx, *input)
 	if err != nil {
 		appErr := apperror.Wrap(err, identity.ErrInvalidCredentialsMsg, "service.LoginUser: неверный логин или пароль", http.StatusUnauthorized)
 		_ = utils.WriteJSONError(w, *appErr)
 		return
 	}
-	_ = utils.WriteJSONResponse(w, map[string]string{"token": token}, http.StatusOK)
+
+	_ = utils.WriteJSONResponse(w, dto.TokenPairResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	}, http.StatusOK)
+	//_ = utils.WriteJSONResponse(w, map[string]string{"token": accessToken}, http.StatusOK)
+}
+
+func (h *Handler) ProfileUser(w http.ResponseWriter, r *http.Request) {
+	userFromCtx, err := identity.GetUserFromCtx(r.Context())
+	if err != nil {
+		appErr := apperror.Wrap(err, "Нет доступа", "handler.ProfileUser: Ошибка при получении context user", http.StatusUnauthorized)
+		utils.LogAndWriteError(w, *appErr)
+		return
+	}
+
+	resp := map[string]any{
+		"id":    userFromCtx.UserID,
+		"role":  userFromCtx.Role,
+		"token": "OK",
+	}
+
+	_ = utils.WriteJSONResponse(w, resp, http.StatusOK)
+}
+
+func (h *Handler) RefreshTokens(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	input, err := httphelper.DecodeJSON[dto.RefreshInput](r)
+	if err != nil {
+		appErr := apperror.New(err, identity.ErrInvalidJSONMsg, identity.ErrInvalidJSONDev, http.StatusBadRequest)
+		utils.LogAndWriteError(w, *appErr)
+		return
+	}
+
+	access, refresh, err := h.service.RefreshTokens(r.Context(), *input)
+	if err != nil {
+		appErr := apperror.Wrap(err, identity.ErrTokenInvalidClaims.Error(), "service.RefreshToken", http.StatusUnauthorized)
+		utils.LogAndWriteError(w, *appErr)
+		return
+	}
+
+	_ = utils.WriteJSONResponse(w, dto.TokenPairResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	}, http.StatusOK)
 }

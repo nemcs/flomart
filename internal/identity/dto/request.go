@@ -14,3 +14,7 @@ type LoginInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type RefreshInput struct {
+	RefreshToken TRefreshToken `json:"refresh_token"`
+}

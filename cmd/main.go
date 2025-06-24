@@ -48,6 +48,14 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(cfg.AccessTokenSecret))
 		r.Get("/profile", h.ProfileUser)
+		r.Route("/shops", func(r chi.Router) {
+			r.Post("/", r.ServeHTTP)
+			r.Get("/", r.ServeHTTP)
+			r.Get("/:id", r.ServeHTTP)
+			r.Put("/:id", r.ServeHTTP)
+			r.Delete("/:id", r.ServeHTTP)
+
+		})
 	})
 
 	if err = http.ListenAndServe(cfg.ListenAddress, r); err != nil {

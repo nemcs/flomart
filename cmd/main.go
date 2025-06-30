@@ -2,10 +2,13 @@ package main
 
 import (
 	"flomart/config"
+	catalogShopHandler "flomart/internal/catalog/shop/handler"
+	catalogShopRepository "flomart/internal/catalog/shop/repository"
+	catalogShopService "flomart/internal/catalog/shop/service"
 	"flomart/internal/identity"
-	"flomart/internal/identity/handler"
-	"flomart/internal/identity/repository"
-	"flomart/internal/identity/service"
+	identityHandler "flomart/internal/identity/handler"
+	identityRepository "flomart/internal/identity/repository"
+	identityService "flomart/internal/identity/service"
 	"flomart/internal/middleware"
 	"flomart/pkg/db"
 	"flomart/pkg/logger"
@@ -16,8 +19,10 @@ import (
 	"os"
 )
 
-//TODO os.Exit или что-то иное? Или документировать код ошибки 1, 2 и т.д.
-//TODO разобраться какие ошибки отдавать пользователю (безопасность) + когда warn/error
+// TODO os.Exit или что-то иное? Или документировать код ошибки 1, 2 и т.д.
+// TODO разобраться какие ошибки отдавать пользователю (безопасность) + когда warn/error
+// TODO при рефреше старый access токен убивать
+// TODO добавить больше инфы в логи при ошибках id юзера, магазина и прочая поебень
 
 func main() {
 	//TODO вынести в конфиг или куда?
@@ -32,28 +37,33 @@ func main() {
 	pool := db.NewPgxPool(cfg.DBUrl)
 	defer pool.Close()
 
-	repo := repository.NewRepository(pool)
-	s := service.NewService(repo)
-	h := handler.NewHandler(s)
+	// === Identity ===
+	identityRepo := identityRepository.NewRepository(pool)
+	identitySrv := identityService.NewService(identityRepo)
+	identityHnd := identityHandler.NewHandler(identitySrv)
+
+	// === Catalog → Shop ===
+	shopRepo := catalogShopRepository.NewRepository(pool)
+	shopSrv := catalogShopService.NewService(shopRepo, pool)
+	shopHnd := catalogShopHandler.NewHandler(shopSrv)
 
 	r := chi.NewRouter()
-	//глобально или локально для защищенных роутеров? r.Use(middleware.AuthMiddleware(cfg.AccessTokenSecret))
 
 	r.Route("/auth", func(r chi.Router) {
-		r.Post("/register", h.RegisterUser)
-		r.Post("/login", h.LoginUser)
-		r.Post("/refresh", h.RefreshTokens)
+		r.Post("/register", identityHnd.RegisterUser)
+		r.Post("/login", identityHnd.LoginUser)
+		r.Post("/refresh", identityHnd.RefreshTokens)
 
 	})
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(cfg.AccessTokenSecret))
-		r.Get("/profile", h.ProfileUser)
+		r.Get("/profile", identityHnd.ProfileUser)
 		r.Route("/shops", func(r chi.Router) {
-			r.Post("/", r.ServeHTTP)
-			r.Get("/", r.ServeHTTP)
-			r.Get("/:id", r.ServeHTTP)
-			r.Put("/:id", r.ServeHTTP)
-			r.Delete("/:id", r.ServeHTTP)
+			r.Post("/", shopHnd.CreateShop)
+			r.Get("/", shopHnd.ListShop)
+			r.Get("/{id}", shopHnd.GetShopByID)
+			r.With(middleware.RequireShopOwnershipOrAdmin(shopSrv)).Put("/{id}", shopHnd.UpdateShop)
+			r.With(middleware.RequireShopOwnershipOrAdmin(shopSrv)).Delete("/{id}", shopHnd.DeleteShop)
 
 		})
 	})

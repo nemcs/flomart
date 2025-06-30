@@ -8,12 +8,3 @@ const (
 	RoleCourier Role = "courier"
 	RoleAdmin   Role = "admin"
 )
-
-func IsValidRole(r Role) bool {
-	switch r {
-	case RoleClient, RoleCourier, RoleAdmin:
-		return true
-	default:
-		return false
-	}
-}

@@ -8,7 +8,6 @@ import (
 	"flomart/internal/identity"
 	"flomart/pkg/httphelper"
 	"flomart/pkg/validation"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -59,7 +58,6 @@ func (h Handler) CreateShop(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) GetShopByID(w http.ResponseWriter, r *http.Request) {
 	shopID := chi.URLParam(r, "id")
-	fmt.Println("\n\n\nid: %v\n\n\n", shopID)
 	shp, err := h.srv.GetShopByID(r.Context(), shop.ID(shopID))
 	if err != nil {
 		appErr := apperror.Wrap(err, "Не удалось получить магазин", "service.GetShopByID: ошибка при получении магазина", http.StatusBadRequest)

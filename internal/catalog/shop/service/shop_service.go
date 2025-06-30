@@ -6,6 +6,7 @@ import (
 	"flomart/domain/shop"
 	"flomart/internal/catalog/shop/dto"
 	"flomart/internal/catalog/shop/repository"
+	"flomart/pkg/db"
 	"flomart/pkg/logger"
 	"fmt"
 	"github.com/jackc/pgx/v5"
@@ -60,7 +61,7 @@ func (s *service) CreateShop(ctx context.Context, input dto.CreateInput) (shop.I
 	if err != nil {
 		return "", fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer db.SafeRollback(ctx, tx)
 
 	if err = s.repo.CreateLocationTx(ctx, tx, *location); err != nil {
 		return "", err
@@ -102,7 +103,7 @@ func (s *service) DeleteShop(ctx context.Context, id shop.ID) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer db.SafeRollback(ctx, tx)
 
 	locationID, err := s.repo.DeleteShopTx(ctx, tx, id)
 	if err != nil {
@@ -130,7 +131,7 @@ func (s *service) UpdateShop(ctx context.Context, shopID shop.ID, input dto.Upda
 	if err != nil {
 		return shop.Shop{}, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer db.SafeRollback(ctx, tx)
 
 	if err = s.repo.UpdateShopTx(ctx, tx, input.Name, input.Description, shopID, city.ID); err != nil {
 		logger.Log.Error("не удалось обновить данные магазина", slog.String(logger.FieldErr, err.Error()))

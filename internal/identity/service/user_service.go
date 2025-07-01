@@ -56,7 +56,8 @@ func (s *service) RegisterUser(ctx context.Context, input dto.RegisterInput) (us
 	u := user.New(input.Email, string(hashedPassword), input.Role, input.Name, input.Phone)
 
 	id, err := s.repo.CreateUser(ctx, *u)
-	//TODO проверка на pgError.Code == "23505"
+	//TODO вынести эту проверку в repo
+	//проверка на pgError.Code == "23505"
 	// и возвращать ошибку что пользователь уже есть
 	if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
 		return "", identity.ErrEmailAlreadyExists
@@ -82,8 +83,13 @@ func (s *service) LoginUser(ctx context.Context, input dto.LoginInput) (dto.TAcc
 		return "", "", identity.ErrInvalidCredentials
 	}
 
+	shopID, err := s.repo.GetShopIDByUserID(ctx, u.ID)
+	if err != nil {
+		return "", "", errors.New("ошибка получения айди магазина")
+	}
+
 	// генерируем токен
-	access, refresh, err := identity.CreateTokens(u.ID, u.Role)
+	access, refresh, err := identity.CreateTokens(u.ID, shopID, u.Role)
 	if err != nil {
 		logger.Log.Error(identity.ErrTokenGenDev, slog.String(logger.FieldErr, err.Error()))
 		//TODO возвращать ErrInternalServerMsg
@@ -93,7 +99,9 @@ func (s *service) LoginUser(ctx context.Context, input dto.LoginInput) (dto.TAcc
 	return access, refresh, nil
 }
 
+// TODO когда будет Redis нужно будет просто чекать не истек ли refresh?
 func (s *service) RefreshTokens(ctx context.Context, input dto.RefreshInput) (dto.TAccessToken, dto.TRefreshToken, error) {
+	// TODO лучше прокинуть в сервис, дабы не вызывать каждый раз на лету
 	cfg := config.New()
 
 	// 1. Парсим токен
@@ -109,7 +117,7 @@ func (s *service) RefreshTokens(ctx context.Context, input dto.RefreshInput) (dt
 	}
 
 	// 3. Генерируем новую пару токенов
-	access, refresh, err := identity.CreateTokens(u.ID, u.Role)
+	access, refresh, err := identity.CreateTokens(u.ID, claims.ShopID, u.Role)
 	if err != nil {
 		logger.Log.Error(identity.ErrTokenGenDev, slog.String(logger.FieldErr, err.Error()))
 		//TODO возвращать ErrInternalServerMsg

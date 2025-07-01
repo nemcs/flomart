@@ -14,6 +14,7 @@ import (
 func DecodeJSON[T any](r *http.Request) (*T, error) {
 	var t T
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		//TODO вынести из identity
 		return nil, fmt.Errorf("%w: %v", identity.ErrInvalidJSON, err)
 	}
 	return &t, nil

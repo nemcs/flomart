@@ -2,6 +2,9 @@ package main
 
 import (
 	"flomart/config"
+	catalogProductHandler "flomart/internal/catalog/product/handler"
+	catalogProductRepository "flomart/internal/catalog/product/repository"
+	catalogProductService "flomart/internal/catalog/product/service"
 	catalogShopHandler "flomart/internal/catalog/shop/handler"
 	catalogShopRepository "flomart/internal/catalog/shop/repository"
 	catalogShopService "flomart/internal/catalog/shop/service"
@@ -47,6 +50,11 @@ func main() {
 	shopSrv := catalogShopService.NewService(shopRepo, pool)
 	shopHnd := catalogShopHandler.NewHandler(shopSrv)
 
+	// === Catalog → Product ===
+	productRepo := catalogProductRepository.NewRepository(pool)
+	productSrv := catalogProductService.NewService(productRepo)
+	productHnd := catalogProductHandler.NewHandler(productSrv)
+
 	r := chi.NewRouter()
 
 	r.Route("/auth", func(r chi.Router) {
@@ -65,6 +73,13 @@ func main() {
 			r.With(middleware.RequireShopOwnershipOrAdmin(shopSrv)).Put("/{id}", shopHnd.UpdateShop)
 			r.With(middleware.RequireShopOwnershipOrAdmin(shopSrv)).Delete("/{id}", shopHnd.DeleteShop)
 
+		})
+		r.Route("/products", func(r chi.Router) {
+			r.Post("/", productHnd.CreateProduct)                             //CreateProduct
+			r.Get("/{id}", productHnd.GetProductByID)                         //GetProductByID
+			r.Get("/shops/{shopID}/products", productHnd.ListProductByShopID) //ListProductByShopID
+			r.Put("/{id}", productHnd.UpdateProduct)                          //UpdateProduct
+			r.Delete("/{id}", productHnd.DeleteProduct)                       // +++                   //DeleteProduct
 		})
 	})
 

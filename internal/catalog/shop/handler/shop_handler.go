@@ -12,6 +12,7 @@ import (
 	"net/http"
 )
 
+// TODO убрать зависимости из identity ( appErr)
 type Handler struct {
 	srv service.Service
 }
@@ -38,7 +39,7 @@ func (h Handler) CreateShop(w http.ResponseWriter, r *http.Request) {
 	}
 	createInput := *input
 
-	// TODO валидация
+	// TODO валидация вынести в функцию? Обрабатывать тоже внутри функции?
 	// валидация input
 	if err = validation.ValidateStruct(createInput); err != nil {
 		appErr = apperror.Wrap(err, "некорректный запрос", "validation failed", http.StatusBadRequest)

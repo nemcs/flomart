@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"flomart/domain/shop"
 	"flomart/domain/user"
 	"flomart/internal/identity"
 	"fmt"
@@ -24,6 +25,7 @@ type Repository interface {
 	CreateUser(ctx context.Context, ser user.User) (*user.ID, error)
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
 	FindByID(ctx context.Context, id user.ID) (*user.User, error)
+	GetShopIDByUserID(ctx context.Context, userID user.ID) (shop.ID, error)
 }
 type repository struct {
 	db *pgxpool.Pool
@@ -93,4 +95,13 @@ func (repo *repository) FindByID(ctx context.Context, id user.ID) (*user.User, e
 		return nil, fmt.Errorf("%s: %w", identity.ErrSqlSelectDev, err)
 	}
 	return &u, nil
+}
+
+func (repo *repository) GetShopIDByUserID(ctx context.Context, userID user.ID) (shop.ID, error) {
+	sql := `select id from shops where owner_id = $1`
+	var shopID shop.ID
+	if err := repo.db.QueryRow(ctx, sql, userID).Scan(&shopID); err != nil {
+		return "", fmt.Errorf("repo.GetShopIDByUserID Scan failed: %w", err)
+	}
+	return shopID, nil
 }

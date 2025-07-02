@@ -2,42 +2,63 @@ package config
 
 import (
 	"flomart/pkg/logger"
-	"github.com/golang-jwt/jwt/v5"
 	"log/slog"
 	"os"
 	"strconv"
-	"time"
 )
 
 type Config struct {
-	DBUrl                  string
-	ListenAddress          string
+	Server  Server
+	DB      DBManager
+	JWT     TokenManager
+	Storage StorageManager
+}
+type Server struct {
+	ListenAddress string
+}
+type DBManager struct {
+	Url string
+}
+type TokenManager struct {
 	AccessTokenSecret      string
 	RefreshTokenSecret     string
-	AccessTokenExpiryHour  *jwt.NumericDate
-	RefreshTokenExpiryHour *jwt.NumericDate
+	AccessTokenExpiryHour  int
+	RefreshTokenExpiryHour int
+}
+type StorageManager struct {
+	StorageAddress  string
+	StoragePassword string
+	StorageDB       string
 }
 
 func New() *Config {
 	return &Config{
-		//TODO сделать проверку на пустую строку и fatal-лог
-		DBUrl:         os.Getenv("DB_URL"),
-		ListenAddress: os.Getenv("LISTEN_ADDRESS"),
-		//TODO переместить в TokenManager
-		AccessTokenSecret:      os.Getenv("ACCESS_TOKEN_SECRET"),
-		RefreshTokenSecret:     os.Getenv("REFRESH_TOKEN_SECRET"),
-		AccessTokenExpiryHour:  mustGetDurationHours("ACCESS_TOKEN_EXPIRY_HOUR"),
-		RefreshTokenExpiryHour: mustGetDurationHours("REFRESH_TOKEN_EXPIRY_HOUR"),
+		Server: Server{
+			ListenAddress: os.Getenv("LISTEN_ADDRESS"),
+		},
+		DB: DBManager{
+			Url: os.Getenv("DB_URL"),
+		},
+		JWT: TokenManager{
+			AccessTokenSecret:      os.Getenv("ACCESS_TOKEN_SECRET"),
+			RefreshTokenSecret:     os.Getenv("REFRESH_TOKEN_SECRET"),
+			AccessTokenExpiryHour:  mustGetInt("ACCESS_TOKEN_EXPIRY_HOUR"),
+			RefreshTokenExpiryHour: mustGetInt("REFRESH_TOKEN_EXPIRY_HOUR"),
+		},
+		Storage: StorageManager{
+			StorageAddress:  os.Getenv("STORAGE_ADDRESS"),
+			StoragePassword: os.Getenv("STORAGE_PASSWORD"),
+			StorageDB:       os.Getenv("STORAGE_DB"),
+		},
 	}
 }
 
-func mustGetDurationHours(key string) *jwt.NumericDate {
+func mustGetInt(key string) int {
 	valueStr := os.Getenv(key)
 	hours, err := strconv.Atoi(valueStr)
 	if err != nil || hours <= 0 {
 		logger.Log.Error("Ошибка жизни токена", slog.String(logger.FieldErr, err.Error()))
 		os.Exit(1)
 	}
-	return jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(hours)))
-
+	return hours
 }

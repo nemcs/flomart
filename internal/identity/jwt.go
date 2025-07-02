@@ -7,6 +7,7 @@ import (
 	"flomart/domain/user"
 	"flomart/internal/identity/dto"
 	"github.com/golang-jwt/jwt/v5"
+	"time"
 )
 
 // TODO TokenManager (CreateToken, ParseToken, RefreshToken)
@@ -54,14 +55,18 @@ func CreateToken(userID user.ID, shopID shop.ID, role, secret string, expiry *jw
 
 func CreateTokens(userID user.ID, shopID shop.ID, role string) (dto.TAccessToken, dto.TRefreshToken, error) {
 	cfg := config.New()
-	access, err := CreateToken(userID, shopID, role, cfg.AccessTokenSecret, cfg.AccessTokenExpiryHour)
+	expiresAccess := jwt.NewNumericDate(time.Now().Add(time.Duration(cfg.JWT.AccessTokenExpiryHour) * time.Hour))
+	access, err := CreateToken(userID, shopID, role, cfg.JWT.AccessTokenSecret, expiresAccess)
 	if err != nil {
 		return "", "", err
 	}
-	refresh, err := CreateToken(userID, shopID, role, cfg.RefreshTokenSecret, cfg.RefreshTokenExpiryHour)
+
+	expiresRefresh := jwt.NewNumericDate(time.Now().Add(time.Duration(cfg.JWT.RefreshTokenExpiryHour) * time.Hour))
+	refresh, err := CreateToken(userID, shopID, role, cfg.JWT.RefreshTokenSecret, expiresRefresh)
 	if err != nil {
 		return "", "", err
 	}
+
 	return dto.TAccessToken(access), dto.TRefreshToken(refresh), err
 }
 

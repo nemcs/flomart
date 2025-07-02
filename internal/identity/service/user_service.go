@@ -105,7 +105,7 @@ func (s *service) RefreshTokens(ctx context.Context, input dto.RefreshInput) (dt
 	cfg := config.New()
 
 	// 1. Парсим токен
-	claims, err := identity.ParseToken(string(input.RefreshToken), cfg.RefreshTokenSecret)
+	claims, err := identity.ParseToken(string(input.RefreshToken), cfg.JWT.RefreshTokenSecret)
 	if err != nil {
 		return "", "", identity.ErrInvalidToken
 	}

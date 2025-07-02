@@ -19,7 +19,7 @@ func main() {
 	}
 	cfg := config.New()
 
-	_, err = migrations.RunMigrations(cfg.DBUrl)
+	_, err = migrations.RunMigrations(cfg.DB.Url)
 	if err != nil {
 		logger.Log.Error(identity.ErrRunMigrationsDev, slog.String(logger.FieldErr, err.Error()))
 		//пользователя никак не уведомляем об этом?
